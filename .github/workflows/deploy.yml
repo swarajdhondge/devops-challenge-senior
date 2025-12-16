@@ -1,17 +1,28 @@
-name: Deploy Infrastructure
+name: Infrastructure - Deploy
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+
+env:
+  TF_VERSION: "1.6.0"
+  AWS_REGION: "us-east-1"
 
 jobs:
-  deploy:
+  terraform-deploy:
+    name: Deploy Infrastructure
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
@@ -19,36 +30,63 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.6.0"
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Restore Terraform State
+        id: restore-state
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          name: tfstate-${{ inputs.environment }}
+          path: terraform/envs/${{ inputs.environment }}/
+          workflow_conclusion: success
+          search_artifacts: true
 
       - name: Terraform Init
-        working-directory: terraform/envs/dev
+        working-directory: terraform/envs/${{ inputs.environment }}
         run: terraform init
 
       - name: Terraform Plan
-        working-directory: terraform/envs/dev
-        run: terraform plan
+        working-directory: terraform/envs/${{ inputs.environment }}
+        run: terraform plan -out=tfplan
 
       - name: Terraform Apply
-        working-directory: terraform/envs/dev
-        run: terraform apply -auto-approve
+        working-directory: terraform/envs/${{ inputs.environment }}
+        run: terraform apply -auto-approve tfplan
 
-      - name: Get API URL
-        working-directory: terraform/envs/dev
+      - name: Save Terraform State
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfstate-${{ inputs.environment }}
+          path: |
+            terraform/envs/${{ inputs.environment }}/terraform.tfstate
+            terraform/envs/${{ inputs.environment }}/terraform.tfstate.backup
+          retention-days: 90
+          overwrite: true
+
+      - name: Display Deployment Summary
+        working-directory: terraform/envs/${{ inputs.environment }}
         run: |
-          echo "### Deployment Complete! :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**API Endpoint:**" >> $GITHUB_STEP_SUMMARY
+          echo "### Resources Created" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### API Endpoint" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           terraform output -raw api_endpoint >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Test it:" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "### Test Command" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "curl $(terraform output -raw api_endpoint)" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
