@@ -10,7 +10,7 @@ terraform {
 
 # API Gateway HTTP API (v2)
 resource "aws_apigatewayv2_api" "main" {
-  name          = "${var.project}-${var.environment}-api"
+  name          = "${var.name_prefix}-${var.environment}-api-gateway"
   protocol_type = "HTTP"
   description   = "HTTP API for ${var.project}"
 
@@ -19,7 +19,7 @@ resource "aws_apigatewayv2_api" "main" {
 
 # CloudWatch Log Group for API Gateway
 resource "aws_cloudwatch_log_group" "api" {
-  name              = "/aws/apigateway/${var.project}-${var.environment}"
+  name              = "/aws/apigateway/${var.name_prefix}-${var.environment}"
   retention_in_days = 7
 
   tags = var.tags

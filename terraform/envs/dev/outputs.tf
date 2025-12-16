@@ -4,8 +4,13 @@ output "api_endpoint" {
 }
 
 output "ecr_repository_url" {
-  description = "ECR repository URL - push Docker images here"
+  description = "ECR repository URL"
   value       = module.ecr.repository_url
+}
+
+output "image_uri" {
+  description = "Docker image URI used by Lambda"
+  value       = module.ecr.image_uri
 }
 
 output "lambda_function_name" {

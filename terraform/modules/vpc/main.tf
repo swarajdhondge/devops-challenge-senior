@@ -20,7 +20,7 @@ resource "aws_vpc" "main" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project}-${var.environment}-vpc"
+      Name = "${var.name_prefix}-${var.environment}-vpc"
     }
   )
 }
@@ -32,7 +32,7 @@ resource "aws_internet_gateway" "main" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project}-${var.environment}-igw"
+      Name = "${var.name_prefix}-${var.environment}-igw"
     }
   )
 }
@@ -44,7 +44,7 @@ resource "aws_eip" "nat" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project}-${var.environment}-nat-eip"
+      Name = "${var.name_prefix}-${var.environment}-nat-eip"
     }
   )
 
@@ -63,7 +63,7 @@ resource "aws_subnet" "public" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project}-${var.environment}-public-${substr(data.aws_availability_zones.available.names[count.index], -2, 2)}"
+      Name = "${var.name_prefix}-${var.environment}-public-${substr(data.aws_availability_zones.available.names[count.index], -2, 2)}"
       Type = "public"
     }
   )
@@ -80,7 +80,7 @@ resource "aws_subnet" "private" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project}-${var.environment}-private-${substr(data.aws_availability_zones.available.names[count.index], -2, 2)}"
+      Name = "${var.name_prefix}-${var.environment}-private-${substr(data.aws_availability_zones.available.names[count.index], -2, 2)}"
       Type = "private"
     }
   )
@@ -94,7 +94,7 @@ resource "aws_nat_gateway" "main" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project}-${var.environment}-nat"
+      Name = "${var.name_prefix}-${var.environment}-nat-gateway"
     }
   )
 
@@ -113,7 +113,7 @@ resource "aws_route_table" "public" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project}-${var.environment}-public-rt"
+      Name = "${var.name_prefix}-${var.environment}-public-rt"
     }
   )
 }
@@ -130,7 +130,7 @@ resource "aws_route_table" "private" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project}-${var.environment}-private-rt"
+      Name = "${var.name_prefix}-${var.environment}-private-rt"
     }
   )
 }
@@ -153,7 +153,7 @@ resource "aws_route_table_association" "private" {
 
 # Security group for Lambda functions
 resource "aws_security_group" "lambda" {
-  name_prefix = "${var.project}-${var.environment}-lambda-"
+  name_prefix = "${var.name_prefix}-${var.environment}-lambda-"
   description = "Security group for Lambda functions"
   vpc_id      = aws_vpc.main.id
 
@@ -169,7 +169,7 @@ resource "aws_security_group" "lambda" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.project}-${var.environment}-lambda-sg"
+      Name = "${var.name_prefix}-${var.environment}-lambda-sg"
     }
   )
 

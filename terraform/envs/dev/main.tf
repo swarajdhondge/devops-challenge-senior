@@ -3,6 +3,7 @@ data "aws_caller_identity" "current" {}
 module "vpc" {
   source = "../../modules/vpc"
 
+  name_prefix = var.name_prefix
   project     = var.project
   environment = var.environment
   vpc_cidr    = var.vpc_cidr
@@ -13,7 +14,10 @@ module "vpc" {
 module "ecr" {
   source = "../../modules/ecr"
 
-  repository_name = var.project
+  name_prefix = var.name_prefix
+  project     = var.project
+  environment = var.environment
+  image_tag   = var.image_tag
 
   tags = var.tags
 }
@@ -21,9 +25,10 @@ module "ecr" {
 module "lambda" {
   source = "../../modules/lambda"
 
+  name_prefix        = var.name_prefix
   project            = var.project
   environment        = var.environment
-  image_uri          = "${module.ecr.repository_url}:${var.image_tag}"
+  image_uri          = module.ecr.image_uri
   subnet_ids         = module.vpc.private_subnet_ids
   security_group_id  = module.vpc.lambda_security_group_id
   timeout            = var.lambda_timeout
@@ -38,6 +43,7 @@ module "lambda" {
 module "api_gateway" {
   source = "../../modules/api_gateway"
 
+  name_prefix         = var.name_prefix
   project             = var.project
   environment         = var.environment
   lambda_function_arn = module.lambda.function_arn

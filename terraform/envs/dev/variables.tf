@@ -1,3 +1,9 @@
+variable "name_prefix" {
+  description = "Prefix for all resource names"
+  type        = string
+  default     = "prtcl"
+}
+
 variable "aws_region" {
   description = "AWS region for resources"
   type        = string
@@ -21,6 +27,7 @@ variable "vpc_cidr" {
 variable "image_tag" {
   description = "Docker image tag to deploy"
   type        = string
+  default     = "latest"
 }
 
 variable "lambda_timeout" {

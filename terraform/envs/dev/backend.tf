@@ -1,10 +1,8 @@
 terraform {
-  backend "s3" {
-    bucket         = "sts-tfstate-REPLACE_WITH_ACCOUNT_ID"
-    key            = "dev/terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
-    dynamodb_table = "sts-tfstate-lock"
+  # Default: Local state (works out of the box)
+  # For remote state with S3, see README.md "Approach B: Production Setup"
+  backend "local" {
+    path = "terraform.tfstate"
   }
 }
 

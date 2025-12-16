@@ -56,4 +56,12 @@ secrets/
 
 # AWS
 .aws/
+*_accessKeys.csv
+
+# Terraform backend config (contains account-specific values - auto-generated)
+backend.hcl
+terraform/envs/*/backend.hcl
+terraform/envs/*/.terraform/
+terraform/envs/*/terraform.tfstate*
+terraform/bootstrap/terraform.tfstate*
 

@@ -9,7 +9,7 @@ terraform {
 }
 
 resource "aws_iam_role" "lambda" {
-  name_prefix = "${var.project}-${var.environment}-lambda-"
+  name = "${var.name_prefix}-${var.environment}-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -41,7 +41,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
 
 # CloudWatch Log Group for Lambda
 resource "aws_cloudwatch_log_group" "lambda" {
-  name              = "/aws/lambda/${var.project}-${var.environment}-function"
+  name              = "/aws/lambda/${var.name_prefix}-${var.environment}-lambda-function"
   retention_in_days = var.log_retention_days
 
   tags = var.tags
@@ -49,10 +49,11 @@ resource "aws_cloudwatch_log_group" "lambda" {
 
 # Lambda Function with container image
 resource "aws_lambda_function" "main" {
-  function_name = "${var.project}-${var.environment}-function"
+  function_name = "${var.name_prefix}-${var.environment}-lambda-function"
   role          = aws_iam_role.lambda.arn
   package_type  = "Image"
   image_uri     = var.image_uri
+  architectures = ["x86_64"]
   timeout       = var.timeout
   memory_size   = var.memory_size
 

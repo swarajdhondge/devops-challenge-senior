@@ -12,13 +12,16 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
+  # Credentials should be provided via environment variables:
+  # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
+  # Or via AWS credentials file: ~/.aws/credentials
 }
 
 data "aws_caller_identity" "current" {}
 
 # S3 Bucket for Terraform state
 resource "aws_s3_bucket" "tfstate" {
-  bucket = "sts-tfstate-${data.aws_caller_identity.current.account_id}"
+  bucket = "${var.name_prefix}-${var.environment}-${data.aws_caller_identity.current.account_id}-tfstate"
 
   tags = {
     Name      = "Terraform State Bucket"
@@ -59,7 +62,7 @@ resource "aws_s3_bucket_public_access_block" "tfstate" {
 
 # DynamoDB table for state locking
 resource "aws_dynamodb_table" "tfstate_lock" {
-  name         = "sts-tfstate-lock"
+  name         = "${var.name_prefix}-${var.environment}-${data.aws_caller_identity.current.account_id}-tfstate-lock"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
 
@@ -73,6 +76,18 @@ resource "aws_dynamodb_table" "tfstate_lock" {
     Project   = "SimpleTimeService"
     ManagedBy = "terraform"
   }
+}
+
+variable "name_prefix" {
+  description = "Prefix for all resource names"
+  type        = string
+  default     = "prtcl"
+}
+
+variable "environment" {
+  description = "Environment name (dev, stage, prod)"
+  type        = string
+  default     = "dev"
 }
 
 variable "aws_region" {
@@ -96,12 +111,13 @@ output "instructions" {
   value       = <<-EOT
     Backend resources created successfully!
     
-    Update terraform/envs/dev/backend.tf with:
-    bucket = "${aws_s3_bucket.tfstate.id}"
+    Bucket name: ${aws_s3_bucket.tfstate.id}
+    DynamoDB table: ${aws_dynamodb_table.tfstate_lock.id}
     
-    Then run:
-    cd ../envs/dev
-    terraform init
+    Next: Configure backend for your environment
+    Run: python setup/setup_backend.py dev
+    
+    This will auto-detect your account ID and generate backend.hcl
   EOT
 }
 

@@ -1,10 +1,13 @@
+name_prefix = "prtcl"
 aws_region  = "us-east-1"
 project     = "sts"
 environment = "dev"
 
 vpc_cidr = "10.0.0.0/16"
 
-image_tag                 = "latest"
+# Docker image tag (ECR repo created and image pushed automatically by terraform)
+image_tag = "latest"
+
 lambda_timeout            = 30
 lambda_memory             = 512
 lambda_log_retention_days = 7

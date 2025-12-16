@@ -1,15 +1,19 @@
 output "repository_url" {
-  description = "URL of the ECR repository"
+  description = "ECR repository URL"
   value       = aws_ecr_repository.main.repository_url
 }
 
 output "repository_arn" {
-  description = "ARN of the ECR repository"
+  description = "ECR repository ARN"
   value       = aws_ecr_repository.main.arn
 }
 
 output "repository_name" {
-  description = "Name of the ECR repository"
+  description = "ECR repository name"
   value       = aws_ecr_repository.main.name
 }
 
+output "image_uri" {
+  description = "Full image URI with tag"
+  value       = "${aws_ecr_repository.main.repository_url}:${var.image_tag}"
+}

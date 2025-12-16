@@ -1,28 +1,31 @@
-FROM python:3.12-slim AS builder
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir --target=/app/dependencies -r requirements.txt
-
+# SimpleTimeService - Works with both docker run AND AWS Lambda
 FROM python:3.12-slim
 
-LABEL description="SimpleTimeService"
+LABEL description="SimpleTimeService - Returns timestamp and visitor IP"
+LABEL maintainer="Particle41 DevOps Challenge"
 
+# Create non-root user (Task 1 requirement)
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Set working directory
 WORKDIR /app
 
-RUN groupadd --gid 1000 appgroup && \
-    useradd --uid 1000 --gid appgroup --shell /bin/bash --create-home appuser
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy dependencies and application
-COPY --from=builder /app/dependencies /app/dependencies
+# Copy application code
 COPY main.py .
 
-ENV PYTHONPATH=/app/dependencies
-ENV PYTHONUNBUFFERED=1
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
 
+# Switch to non-root user
 USER appuser
 
-EXPOSE 8000
+# Expose port for standalone mode
+EXPOSE 8080
 
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-
+# Default: Run uvicorn for standalone docker run
+# For Lambda: Override with CMD ["python", "-c", "..."] or use mangum handler
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

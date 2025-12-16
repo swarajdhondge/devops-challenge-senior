@@ -1,0 +1,15 @@
+# SimpleTimeService - AWS Lambda version
+FROM public.ecr.aws/lambda/python:3.12
+
+LABEL description="SimpleTimeService - Lambda version"
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY main.py .
+
+# Lambda handler: main.py -> handler function (Mangum wraps FastAPI)
+CMD ["main.handler"]
+
