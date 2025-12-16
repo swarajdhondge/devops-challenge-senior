@@ -49,6 +49,8 @@ jobs:
           terraform_wrapper: false
 
       - name: Restore Terraform State
+        id: restore-state
+        continue-on-error: true
         uses: dawidd6/action-download-artifact@v3
         with:
           name: tfstate-${{ inputs.environment }}
@@ -56,20 +58,43 @@ jobs:
           workflow_conclusion: success
           search_artifacts: true
 
+      - name: Check State Exists
+        id: check-state
+        working-directory: terraform/envs/${{ inputs.environment }}
+        run: |
+          if [ -f "terraform.tfstate" ]; then
+            echo "state_exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Found existing terraform state"
+          else
+            echo "state_exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No terraform state found - nothing to destroy"
+          fi
+
       - name: Terraform Init
+        if: steps.check-state.outputs.state_exists == 'true'
         working-directory: terraform/envs/${{ inputs.environment }}
         run: terraform init
 
       - name: Terraform Destroy
+        if: steps.check-state.outputs.state_exists == 'true'
         working-directory: terraform/envs/${{ inputs.environment }}
         run: terraform destroy -auto-approve
 
       - name: Display Destruction Summary
-        if: success()
         run: |
-          echo "## 🗑️ Infrastructure Destroyed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "All AWS resources have been removed." >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check-state.outputs.state_exists }}" == "true" ]; then
+            echo "## 🗑️ Infrastructure Destroyed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "All AWS resources have been removed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ℹ️ Nothing to Destroy" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No infrastructure was found for environment **${{ inputs.environment }}**." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This could mean:" >> $GITHUB_STEP_SUMMARY
+            echo "- Infrastructure was never deployed via GitHub Actions" >> $GITHUB_STEP_SUMMARY
+            echo "- Infrastructure was already destroyed" >> $GITHUB_STEP_SUMMARY
+          fi
