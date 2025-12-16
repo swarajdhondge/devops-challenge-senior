@@ -1,4 +1,4 @@
-# Run this ONCE to create S3 bucket and DynamoDB table for Terraform state/Remote Backend
+# Creates S3 bucket and DynamoDB table for Terraform remote state
 
 terraform {
   required_version = ">= 1.6.0"

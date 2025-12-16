@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Terraform wrapper that exports AWS credentials. Usage: python run.py [init|plan|apply|destroy]
 import os
 import sys
 import subprocess

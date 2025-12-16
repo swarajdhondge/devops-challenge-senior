@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""
-Setup script for Terraform remote state backend.
-Auto-detects AWS account ID and generates backend.hcl configuration.
-"""
+# Generates backend.hcl for remote state. Usage: python setup.py dev
 import os
 import sys
 import subprocess
