@@ -55,6 +55,7 @@ jobs:
         with:
           name: tfstate-${{ inputs.environment }}
           path: terraform/envs/${{ inputs.environment }}/
+          workflow: deploy.yml
           workflow_conclusion: success
           search_artifacts: true
 
@@ -62,9 +63,12 @@ jobs:
         id: check-state
         working-directory: terraform/envs/${{ inputs.environment }}
         run: |
+          echo "Listing directory contents:"
+          ls -la
           if [ -f "terraform.tfstate" ]; then
             echo "state_exists=true" >> $GITHUB_OUTPUT
             echo "✅ Found existing terraform state"
+            cat terraform.tfstate | head -20
           else
             echo "state_exists=false" >> $GITHUB_OUTPUT
             echo "⚠️ No terraform state found - nothing to destroy"
